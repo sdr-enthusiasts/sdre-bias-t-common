@@ -14,7 +14,7 @@ READSB_RTLSDR_DEVICE="${DUMP978_RTLSDR_DEVICE:-${READSB_RTLSDR_DEVICE}}"
 
 if [[ "$READSB_DEVICE_TYPE" == "rtlsdr" ]]; then
     s6wrap --quiet --prepend="$(basename "$0")" --timestamps --args echo "Device type is rtlsdr, checking for bias tee..."
-    if [[ -n "$READSB_ENABLE_BIASTEE" ]]; then
+    if chk_enabled "$READSB_ENABLE_BIASTEE"; then
         s6wrap --quiet --prepend="$(basename "$0")" --timestamps --args echo "Trying to disable bias tee..."
         # Prepare temp file
         biast_tempfile=$(mktemp)
@@ -49,7 +49,7 @@ if [[ "$READSB_DEVICE_TYPE" == "rtlsdr" ]]; then
                         device_model=$(echo "$line" | sed -n 's/\([0-9]\+\):\s\+\(\w\+\),\s\+\(\w\+\s\+\w\+\),\s\+SN:\s\+\([0-9a-zA-Z]\{1,8\}\)\s*$/\3/p')
                         device_serial=$(echo "$line" | sed -n 's/\([0-9]\+\):\s\+\(\w\+\),\s\+\(\w\+\s\+\w\+\),\s\+SN:\s\+\([0-9a-zA-Z]\{1,8\}\)\s*$/\4/p')
 
-                        if [[ "$device_serial" == "$READSB_RTLSDR_DEVICE" ]]; && chk_enabled "$READSB_ENABLE_BIASTEE"; then
+                        if [[ "$device_serial" == "$READSB_RTLSDR_DEVICE" ]] && chk_enabled "$READSB_ENABLE_BIASTEE"; then
                             s6wrap --quiet --prepend="$(basename "$0")" --timestamps --args echo "Disabling bias tee for device $device_id:  $device_manufacturer, $device_model, SN: $device_serial"
                             # shellcheck disable=SC2016
                             s6wrap --quiet --prepend="$(basename "$0")" --timestamps --args rtl_biast -d "$device_id" -b 0
@@ -57,7 +57,7 @@ if [[ "$READSB_DEVICE_TYPE" == "rtlsdr" ]]; then
                     fi
                 done < "$biast_tempfile"
             fi
-        elif && chk_enabled "$READSB_ENABLE_BIASTEE"; then
+        else
             s6wrap --quiet --prepend="$(basename "$0")" --timestamps --args echo "Disabling bias tee..."
             # shellcheck disable=SC2016
             s6wrap --quiet --prepend="$(basename "$0")" --timestamps --args rtl_biast -b 0
